@@ -4,7 +4,7 @@ pub struct BitCartesianN {
 }
 
 impl BitCartesianN {
-    fn new(n: u32) -> Self {
+    pub fn new(n: u32) -> Self {
         Self {
             n,
             counter: 0,

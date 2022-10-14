@@ -2,6 +2,7 @@ use indexmap::map::IndexMap;
 
 use crate::bitcartesiann::BitCartesianN;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Expr {
     Var(String),
     Not(Box<Expr>),
@@ -66,7 +67,7 @@ mod tests {
     use Expr::*;
 
     #[test]
-    fn test_get_vars() {
+    fn test_ast_get_vars() {
         let expr = And(
             Box::new(Expr::Var("A".to_string())),
             Box::new(Expr::Or(
@@ -79,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_all() {
+    fn test_ast_evaluate_all() {
         use Expr::*;
         let expr = And(
             Box::new(Var("A".to_string())),

@@ -63,10 +63,10 @@ impl Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use Expr::*;
 
     #[test]
     fn test_get_vars() {
-        use Expr::*;
         let expr = And(
             Box::new(Expr::Var("A".to_string())),
             Box::new(Expr::Or(
@@ -79,19 +79,15 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_var() {
-        let expr = Expr::Var("A".to_string());
-        let vars = expr.get_vars();
-    }
-
-    #[test]
     fn test_evaluate_all() {
         use Expr::*;
         let expr = And(
             Box::new(Var("A".to_string())),
             Box::new(Or(
                 Box::new(Var("B".to_string())),
-                Box::new(Var("C".to_string())),
+                Box::new(
+                    Not(Box::new(Var("C".to_string())))
+                ),
             )),
         );
         let result = expr.evaluate_all().unwrap();

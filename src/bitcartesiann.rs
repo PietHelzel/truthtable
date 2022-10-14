@@ -26,9 +26,7 @@ impl Iterator for BitCartesianN {
         
         let mut extract = 1 << self.n - 1;
         
-        for _ in 0..self.n {
-            println!("{:b} {:b} {}", self.counter, extract, self.counter & extract);
-            
+        for _ in 0..self.n {          
             bits.push(self.counter & extract >= 1);
             extract = extract >> 1;
         }

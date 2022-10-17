@@ -3,45 +3,71 @@ use crate::ast::Expr;
 use nom::{
     IResult,
     character::{is_space, is_alphabetic},
-    bytes::complete::{take_while, tag},
-    branch::alt, sequence::tuple,
-    sequence::delimited
+    bytes::complete::tag,
+    character::complete::alphanumeric1,
+    branch::alt, sequence::{tuple, delimited},
+    sequence::{separated_pair, preceded}
 };
 
-// fn space(input: &str) -> IResult<&str, &str> {
-//     take_while(|x| is_space(x as u8))(input)
-// }
+//Type definition for the default return value of the parsers
+type ExprRes<'a> = IResult<&'a str, Box<Expr>>;
 
-fn identifier(input: &str) -> IResult<&str, Box<Expr>> {
-    let (input, ident) = take_while(|x| is_alphabetic(x as u8))(input)?;
+//Detects a factor surrounded by parentheses
+fn parens(input: &str) -> ExprRes {
+    delimited(tag("("), expression, tag(")"))(input)
+}
+
+//Detects either an identifier or an expression surrounded by parentheses
+fn factor(input: &str) -> ExprRes {
+    alt((
+        identifier,
+        parens
+    ))(input)
+}
+
+//Detects an identifier of a variable, which is an alphabetic word
+fn identifier(input: &str) -> ExprRes {
+    let (input, ident) = alphanumeric1(input)?;
     let expr_ident = Box::new(Expr::Var(ident.to_string()));
     Ok((input, expr_ident))
 }
 
-fn operator_not(input: &str) -> IResult<&str, Box<Expr>> {
-    let (input, _) = tag("!")(input)?;
-    let (input, ident) = identifier(input)?;
-    let expr = Box::new(Expr::Not(ident));
+//Detects the "not" operator, with the syntax "!x"
+fn operator_not(input: &str) -> ExprRes {
+    let (input, term) = preceded(tag("!"), factor)(input)?;
+
+    Ok((input, Box::new(Expr::Not(term))))
+}
+
+//Detects the "and" operator, with the syntax "x&y"
+fn operator_and(input: &str) -> ExprRes {
+    let (input, (factor1, factor2)) = separated_pair(factor, tag("&"), factor)(input)?;
+    
+    let expr = Box::new(Expr::And(factor1, factor2));
     Ok((input, expr))
 }
 
-fn operator_and(input: &str) -> IResult<&str, Box<Expr>> {
-    let (input, op1) = identifier(input)?;
-    let (input, _) = tag("&")(input)?;
-    let (input, op2) = identifier(input)?;
-
-    let expr = Box::new(Expr::And(op1, op2));
+//Detects the "or" operator, with the syntax "x|y"
+fn operator_or(input: &str) -> ExprRes {
+    let (input, (factor1, factor2)) = separated_pair(factor, tag("|"), factor)(input)?;
+    
+    let expr = Box::new(Expr::Or(factor1, factor2));
     Ok((input, expr))
+}
+
+//Detects all kinds of expressions, both operators and identifiers
+fn expression(input: &str) -> ExprRes {
+    alt((
+        operator_and,
+        operator_or,
+        operator_not,
+        identifier
+    ))(input)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[test]
-    // fn test_parser_space() {
-    //     assert_eq!(space("  abc  "), Ok(("abc  ", "  ")));
-    // }
 
     #[test]
     fn test_parser_identifier() {
@@ -63,6 +89,28 @@ mod tests {
             Expr::And(
                 Box::new(Expr::Var("a".to_string())),
                 Box::new(Expr::Var("b".to_string()))
+            )
+        ))));
+    }
+
+    #[test]
+    fn test_parser_operator_or() {
+        assert_eq!(operator_or("a|b"), Ok(("", Box::new(
+            Expr::Or(
+                Box::new(Expr::Var("a".to_string())),
+                Box::new(Expr::Var("b".to_string()))
+            )
+        ))));
+    }
+
+    #[test]
+    fn test_parser_expression() {
+        assert_eq!(expression("a&(!b)"), Ok(("", Box::new(
+            Expr::And(
+                Box::new(Expr::Var("a".to_string())),
+                Box::new(
+                    Expr::Not(Box::new(Expr::Var("b".to_string())))
+                )
             )
         ))));
     }

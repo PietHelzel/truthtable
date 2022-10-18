@@ -1,5 +1,7 @@
 use indexmap::map::IndexMap;
 
+use std::fmt::Display;
+
 use crate::bitcartesiann::BitCartesianN;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -8,6 +10,17 @@ pub enum Expr {
     Not(Box<Expr>),
     And(Box<Expr>, Box<Expr>),
     Or(Box<Expr>, Box<Expr>),
+}
+
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expr::Var(ident) => write!(f, "{ident}"),
+            Expr::Not(a) => write!(f, "!{}", a),
+            Expr::And(a, b) => write!(f, "{}&{}", a, b),
+            Expr::Or(a, b) => write!(f, "{}|{}", a, b),
+        }
+    }
 }
 
 impl Expr {

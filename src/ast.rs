@@ -16,9 +16,9 @@ impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expr::Var(ident) => write!(f, "{ident}"),
-            Expr::Not(a) => write!(f, "!{}", a),
-            Expr::And(a, b) => write!(f, "{}&{}", a, b),
-            Expr::Or(a, b) => write!(f, "{}|{}", a, b),
+            Expr::Not(a) => write!(f, "(!{})", a),
+            Expr::And(a, b) => write!(f, "({}&{})", a, b),
+            Expr::Or(a, b) => write!(f, "({}|{})", a, b),
         }
     }
 }

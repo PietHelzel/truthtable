@@ -1,12 +1,12 @@
 use crate::ast::Expr;
 
 use nom::{
-    IResult,
-    character::{is_space, is_alphabetic},
+    branch::alt,
     bytes::complete::tag,
     character::complete::alphanumeric1,
-    branch::alt, sequence::{tuple, delimited},
-    sequence::{separated_pair, preceded}
+    sequence::delimited,
+    sequence::{preceded, separated_pair},
+    IResult
 };
 
 //Type definition for the default return value of the parsers
@@ -19,10 +19,7 @@ fn parens(input: &str) -> ExprRes {
 
 //Detects either an identifier or an expression surrounded by parentheses
 fn factor(input: &str) -> ExprRes {
-    alt((
-        identifier,
-        parens
-    ))(input)
+    alt((identifier, parens))(input)
 }
 
 //Detects an identifier of a variable, which is an alphabetic word
@@ -42,7 +39,7 @@ fn operator_not(input: &str) -> ExprRes {
 //Detects the "and" operator, with the syntax "x&y"
 fn operator_and(input: &str) -> ExprRes {
     let (input, (factor1, factor2)) = separated_pair(factor, tag("&"), factor)(input)?;
-    
+
     let expr = Box::new(Expr::And(factor1, factor2));
     Ok((input, expr))
 }
@@ -50,19 +47,22 @@ fn operator_and(input: &str) -> ExprRes {
 //Detects the "or" operator, with the syntax "x|y"
 fn operator_or(input: &str) -> ExprRes {
     let (input, (factor1, factor2)) = separated_pair(factor, tag("|"), factor)(input)?;
-    
+
     let expr = Box::new(Expr::Or(factor1, factor2));
     Ok((input, expr))
 }
 
 //Detects all kinds of expressions, both operators and identifiers
 fn expression(input: &str) -> ExprRes {
-    alt((
-        operator_and,
-        operator_or,
-        operator_not,
-        identifier
-    ))(input)
+    alt((operator_and, operator_or, operator_not, identifier))(input)
+}
+
+pub fn parse(input: &str) -> Option<Expr> {
+    let input = input.replace(" ", "").replace("\n", "");
+    match expression(&input) {
+        Ok((_, result)) => Some(*result),
+        Err(_) => None,
+    }
 }
 
 #[cfg(test)]
@@ -71,47 +71,62 @@ mod tests {
 
     #[test]
     fn test_parser_identifier() {
-        assert_eq!(identifier("abc"), Ok(("", Box::new(Expr::Var("abc".to_string())))));
+        assert_eq!(
+            identifier("abc"),
+            Ok(("", Box::new(Expr::Var("abc".to_string()))))
+        );
     }
 
     #[test]
     fn test_parser_operator_not() {
-        assert_eq!(operator_not("!abc"), Ok(("", Box::new(
-            Expr::Not(
-                Box::new(Expr::Var("abc".to_string()))
-            )
-        ))));
+        assert_eq!(
+            operator_not("!abc"),
+            Ok((
+                "",
+                Box::new(Expr::Not(Box::new(Expr::Var("abc".to_string()))))
+            ))
+        );
     }
 
     #[test]
     fn test_parser_operator_and() {
-        assert_eq!(operator_and("a&b"), Ok(("", Box::new(
-            Expr::And(
-                Box::new(Expr::Var("a".to_string())),
-                Box::new(Expr::Var("b".to_string()))
-            )
-        ))));
+        assert_eq!(
+            operator_and("a&b"),
+            Ok((
+                "",
+                Box::new(Expr::And(
+                    Box::new(Expr::Var("a".to_string())),
+                    Box::new(Expr::Var("b".to_string()))
+                ))
+            ))
+        );
     }
 
     #[test]
     fn test_parser_operator_or() {
-        assert_eq!(operator_or("a|b"), Ok(("", Box::new(
-            Expr::Or(
-                Box::new(Expr::Var("a".to_string())),
-                Box::new(Expr::Var("b".to_string()))
-            )
-        ))));
+        assert_eq!(
+            operator_or("a|b"),
+            Ok((
+                "",
+                Box::new(Expr::Or(
+                    Box::new(Expr::Var("a".to_string())),
+                    Box::new(Expr::Var("b".to_string()))
+                ))
+            ))
+        );
     }
 
     #[test]
     fn test_parser_expression() {
-        assert_eq!(expression("a&(!b)"), Ok(("", Box::new(
-            Expr::And(
-                Box::new(Expr::Var("a".to_string())),
-                Box::new(
-                    Expr::Not(Box::new(Expr::Var("b".to_string())))
-                )
-            )
-        ))));
+        assert_eq!(
+            expression("a&(!b)"),
+            Ok((
+                "",
+                Box::new(Expr::And(
+                    Box::new(Expr::Var("a".to_string())),
+                    Box::new(Expr::Not(Box::new(Expr::Var("b".to_string()))))
+                ))
+            ))
+        );
     }
 }

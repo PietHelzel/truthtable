@@ -24,10 +24,18 @@ impl Display for Expr {
 }
 
 impl Expr {
-    fn get_vars(&self) -> Vec<String> {
+    pub fn get_vars(&self) -> Vec<String> {
         let mut vars = Vec::new();
         self._get_vars_recursive(&mut vars);
-        vars
+        
+        let mut vars_dedup = Vec::new();
+        for i in vars {
+            if !vars_dedup.contains(&i) {
+                vars_dedup.push(i);
+            }
+        }
+
+        vars_dedup
     }
 
     fn _get_vars_recursive(&self, vars: &mut Vec<String>) {
@@ -45,7 +53,7 @@ impl Expr {
         }
     }
 
-    fn evaluate(&self, vars: &IndexMap<String, bool>) -> Option<bool> {
+    pub fn evaluate(&self, vars: &IndexMap<String, bool>) -> Option<bool> {
         Some(match self {
             Expr::Var(a) => *(vars.get(a)?),
             Expr::Not(a) => !a.evaluate(vars)?,
@@ -54,7 +62,7 @@ impl Expr {
         })
     }
 
-    fn evaluate_all(&self) -> Option<Vec<(IndexMap<String, bool>, bool)>> {
+    pub fn evaluate_all(&self) -> Option<Vec<(IndexMap<String, bool>, bool)>> {
         let vars = self.get_vars();
         let vars_len = vars.len() as u32;
 

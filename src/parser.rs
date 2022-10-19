@@ -54,7 +54,7 @@ fn operator_or(input: &str) -> ExprRes {
 
 //Detects all kinds of expressions, both operators and identifiers
 fn expression(input: &str) -> ExprRes {
-    alt((operator_and, operator_or, operator_not, identifier))(input)
+    alt((operator_and, operator_or, operator_not, identifier, parens))(input)
 }
 
 pub fn parse(input: &str) -> Option<Expr> {

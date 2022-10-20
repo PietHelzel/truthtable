@@ -19,7 +19,7 @@ fn parens(input: &str) -> ExprRes {
 
 //Detects either an identifier or an expression surrounded by parentheses
 fn factor(input: &str) -> ExprRes {
-    alt((identifier, parens))(input)
+    alt((identifier, parens, operator_not))(input)
 }
 
 //Detects an identifier of a variable, which is an alphabetic word

@@ -6,12 +6,12 @@ mod visualise;
 use parser::*;
 use visualise::visualise;
 
+use std::env::args;
+
 fn main() {
-    let i = "(a&b)|((!a)&(!b))";
+    let i = &args().nth(1).expect("No expression supplied via CLI");
 
     let parsed_expr = parse(i).unwrap();
-
-    println!("{parsed_expr}");
 
     let eval_expr = parsed_expr.evaluate_all().unwrap();
 

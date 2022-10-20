@@ -10,6 +10,9 @@ pub enum Expr {
     Not(Box<Expr>),
     And(Box<Expr>, Box<Expr>),
     Or(Box<Expr>, Box<Expr>),
+    Implication(Box<Expr>, Box<Expr>),
+    Biconditional(Box<Expr>, Box<Expr>),
+    XOR(Box<Expr>, Box<Expr>),
 }
 
 impl Display for Expr {
@@ -19,6 +22,9 @@ impl Display for Expr {
             Expr::Not(a) => write!(f, "(!{})", a),
             Expr::And(a, b) => write!(f, "({}&{})", a, b),
             Expr::Or(a, b) => write!(f, "({}|{})", a, b),
+            Expr::Implication(a, b) => write!(f, "({}=>{})", a, b),
+            Expr::Biconditional(a, b) => write!(f, "({}<=>{})", a, b),
+            Expr::XOR(a, b) => write!(f, "({}<!=>{})", a, b),
         }
     }
 }
@@ -49,7 +55,19 @@ impl Expr {
             Expr::Or(a, b) => {
                 a._get_vars_recursive(vars);
                 b._get_vars_recursive(vars);
-            }
+            },
+            Expr::Implication(a, b) => {
+                a._get_vars_recursive(vars);
+                b._get_vars_recursive(vars);
+            },
+            Expr::Biconditional(a, b) => {
+                a._get_vars_recursive(vars);
+                b._get_vars_recursive(vars);
+            },
+            Expr::XOR(a, b) => {
+                a._get_vars_recursive(vars);
+                b._get_vars_recursive(vars);
+            },
         }
     }
 
@@ -59,6 +77,17 @@ impl Expr {
             Expr::Not(a) => !a.evaluate(vars)?,
             Expr::And(a, b) => a.evaluate(vars)? && b.evaluate(vars)?,
             Expr::Or(a, b) => a.evaluate(vars)? || b.evaluate(vars)?,
+            Expr::Implication(a, b) => {
+                let a_eval = a.evaluate(vars)?;
+                let b_eval = b.evaluate(vars)?;
+                if a_eval && !b_eval {
+                    false
+                } else {
+                    true
+                }
+            },
+            Expr::Biconditional(a, b) => a.evaluate(vars) == b.evaluate(vars),
+            Expr::XOR(a, b) => a.evaluate(vars) != b.evaluate(vars),
         })
     }
 

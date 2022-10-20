@@ -52,9 +52,33 @@ fn operator_or(input: &str) -> ExprRes {
     Ok((input, expr))
 }
 
+//Detects the "implication" operator, with the syntax "x=>y"
+fn operator_implication(input: &str) -> ExprRes {
+    let (input, (factor1, factor2)) = separated_pair(factor, tag("=>"), factor)(input)?;
+
+    let expr = Box::new(Expr::Implication(factor1, factor2));
+    Ok((input, expr))
+}
+
+//Detects the "biconditional" operator, with the syntax "x<=>y"
+fn operator_biconditional(input: &str) -> ExprRes {
+    let (input, (factor1, factor2)) = separated_pair(factor, tag("<=>"), factor)(input)?;
+
+    let expr = Box::new(Expr::Biconditional(factor1, factor2));
+    Ok((input, expr))
+}
+
+//Detects the "XOR" operator, with the syntax "x<!=>y"
+fn operator_xor(input: &str) -> ExprRes {
+    let (input, (factor1, factor2)) = separated_pair(factor, tag("<!=>"), factor)(input)?;
+
+    let expr = Box::new(Expr::XOR(factor1, factor2));
+    Ok((input, expr))
+}
+
 //Detects all kinds of expressions, both operators and identifiers
 fn expression(input: &str) -> ExprRes {
-    alt((operator_and, operator_or, operator_not, identifier, parens))(input)
+    alt((operator_and, operator_or, operator_implication, operator_biconditional, operator_xor, operator_not, identifier, parens))(input)
 }
 
 pub fn parse(input: &str) -> Option<Expr> {

@@ -11,7 +11,7 @@ use std::env::args;
 fn main() {
     let i = &args().nth(1).expect("No expression supplied via CLI");
 
-    let parsed_expr = parse(i).unwrap();
+    let parsed_expr = parse(i).expect("Malformed expression");
 
     let eval_expr = parsed_expr.evaluate_all().unwrap();
 

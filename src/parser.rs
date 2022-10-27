@@ -6,7 +6,7 @@ use nom::{
     character::complete::alphanumeric1,
     multi::many1,
     sequence::delimited,
-    sequence::{preceded, separated_pair},
+    sequence::preceded,
     IResult,
 };
 

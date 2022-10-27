@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use crate::bitcartesiann::BitCartesianN;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
     Var(String),
     Not(Box<Expr>),
@@ -70,6 +70,47 @@ impl Expr {
             },
         }
     }
+    
+    pub fn get_steps(&self) -> Vec<Expr> {
+        let mut steps = Vec::new();
+        self._get_steps_recursive(&mut steps);
+        steps
+    }
+    
+    fn _get_steps_recursive(&self, steps: &mut Vec<Expr>) {
+        match self {
+            Expr::Var(_) => {},
+            Expr::Not(a) => {
+                a._get_steps_recursive(steps);
+                steps.push(Expr::Not(a.clone()));
+            },
+            Expr::And(a, b) => {
+                a._get_steps_recursive(steps);
+                b._get_steps_recursive(steps);
+                steps.push(Expr::And(a.clone(), b.clone()))
+            },
+            Expr::Or(a, b) => {
+                a._get_steps_recursive(steps);
+                b._get_steps_recursive(steps);
+                steps.push(Expr::Or(a.clone(), b.clone()))
+            },
+            Expr::Implication(a, b) => {
+                a._get_steps_recursive(steps);
+                b._get_steps_recursive(steps);
+                steps.push(Expr::Implication(a.clone(), b.clone()))
+            },
+            Expr::Biconditional(a, b) => {
+                a._get_steps_recursive(steps);
+                b._get_steps_recursive(steps);
+                steps.push(Expr::Biconditional(a.clone(), b.clone()))
+            },
+            Expr::XOR(a, b) => {
+                a._get_steps_recursive(steps);
+                b._get_steps_recursive(steps);
+                steps.push(Expr::XOR(a.clone(), b.clone()))
+            }
+        }
+    }
 
     pub fn evaluate(&self, vars: &IndexMap<String, bool>) -> Option<bool> {
         Some(match self {
@@ -131,7 +172,6 @@ mod tests {
 
     #[test]
     fn test_ast_evaluate_all() {
-        use Expr::*;
         let expr = And(
             Box::new(Var("A".to_string())),
             Box::new(Or(
@@ -146,5 +186,25 @@ mod tests {
             let correct_r = expr.evaluate(&test_r.0).unwrap();
             assert_eq!(correct_r, test_r.1);
         }
+    }
+    
+    #[test]
+    fn test_ast_get_steps() {
+        let expr = And(
+            Box::new(Var("A".to_string())),
+            Box::new(Or(
+                Box::new(Var("B".to_string())),
+                Box::new(
+                    Not(Box::new(Var("C".to_string())))
+                ),
+            )),
+        );
+        let result: Vec<_> = expr.get_steps().iter().map(|s| format!("{}", s)).collect();
+        
+        assert_eq!(result, vec![
+            "(!C)".to_string(),
+            "(B|(!C))".to_string(),
+            "(A&(B|(!C)))".to_string(),
+        ])
     }
 }
